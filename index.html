@@ -1,1 +1,69 @@
-Hello there!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Countdown</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .countdown {
+            text-align: center;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        .countdown h1 {
+            margin-bottom: 20px;
+        }
+        .countdown div {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        .countdown span {
+            font-weight: bold;
+            font-size: 32px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="countdown">
+        <h1>Real-Time Countdown</h1>
+        <div id="year"></div>
+        <div id="month"></div>
+        <div id="week"></div>
+    </div>
+
+    <script>
+        function updateCountdown() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1; // Months are 0-indexed
+            const currentWeek = Math.ceil((now.getDate() + 6 - now.getDay()) / 7); // Calculate the current week
+
+            const yearEnd = new Date(currentYear, 11, 31); // December 31 of the current year
+            const monthsInYear = 12;
+
+            const remainingDaysInYear = Math.ceil((yearEnd - now) / (1000 * 60 * 60 * 24));
+
+            // Update the countdown
+            document.getElementById('year').innerHTML = `Time left this year: <span>${remainingDaysInYear} days</span>`;
+            document.getElementById('month').innerHTML = `Month: <span>${currentMonth}</span>`;
+            document.getElementById('week').innerHTML = `Week of the year: <span>${currentWeek}</span>`;
+        }
+
+        // Update the countdown every second
+        setInterval(updateCountdown, 1000);
+        updateCountdown(); // Initial call to display countdown immediately
+    </script>
+</body>
+</html>
