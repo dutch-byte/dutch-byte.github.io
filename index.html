@@ -3,139 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Countdown</title>
+    <title>Practice Timer</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        .countdown {
-            text-align: center;
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 10px;
-        }
-        .countdown h1 {
-            margin-bottom: 20px;
-        }
-        .countdown div {
-            font-size: 20px;
-            margin: 10px 0;
-        }
-        .countdown span {
-            font-weight: bold;
-            font-size: 28px;
-            color: #333;
-        }
-        .progress-bar {
-            width: 100%;
-            background-color: #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-        .progress {
-            height: 10px;
-            background-color: #4CAF50;
-            text-align: center;
-            line-height: 10px;
-        }
-        .selector {
-            margin-bottom: 15px;
-            font-size: 16px;
-            padding: 5px;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        #status { font-size: 24px; margin: 20px; }
     </style>
 </head>
 <body>
-    <select id="unit-selector" class="selector">
-        <option value="hours">Hours</option>
-        <option value="days">Days</option>
-        <option value="seconds">Seconds</option>
-    </select>
-
-    <div class="countdown">
-        <h1>Real-Time Countdown</h1>
-        <div id="year"></div>
-        <div class="progress-bar"><div id="year-progress" class="progress"></div></div>
-        <div id="month"></div>
-        <div class="progress-bar"><div id="month-progress" class="progress"></div></div>
-        <div id="week"></div>
-        <div class="progress-bar"><div id="week-progress" class="progress"></div></div>
-    </div>
-
-    <div class="countdown">
-        <h1>Upcoming Events</h1>
-        <div id="full-moon"></div>
-        <div id="sunset"></div>
-        <div id="sunrise"></div>
-        <div id="eu-vote"></div>
-    </div>
-
+    <h1>Instrument Practice Timer</h1>
+    <button id="start">Start</button>
+    <button id="stop" disabled>Stop</button>
+    <p id="status">Press start to begin tracking.</p>
+    <p>Play Time: <span id="playTime">0</span> sec</p>
+    <p>Study Time: <span id="studyTime">0</span> sec</p>
+    
     <script>
-        function getNextFullMoon() {
-            const lunarCycle = 29.53 * 24 * 60 * 60 * 1000; 
-            const knownFullMoon = new Date(2024, 0, 25); 
-            let nextFullMoon = new Date(knownFullMoon);
-            while (nextFullMoon < new Date()) {
-                nextFullMoon = new Date(nextFullMoon.getTime() + lunarCycle);
+        let audioContext, analyser, microphone;
+        let playTime = 0, studyTime = 0;
+        let threshold = 0.05, minDuration = 2; // Adjust as needed
+        let isPlaying = false;
+        let playStart = 0;
+        let interval;
+
+        document.getElementById('start').addEventListener('click', async () => {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+            analyser.fftSize = 256;
+            
+            document.getElementById('start').disabled = true;
+            document.getElementById('stop').disabled = false;
+            interval = setInterval(trackAudio, 1000);
+        });
+
+        document.getElementById('stop').addEventListener('click', () => {
+            clearInterval(interval);
+            document.getElementById('status').innerText = "Tracking stopped.";
+            document.getElementById('start').disabled = false;
+            document.getElementById('stop').disabled = true;
+        });
+
+        function trackAudio() {
+            let dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(dataArray);
+            let volume = dataArray.reduce((a, b) => a + b) / dataArray.length / 255;
+            
+            if (volume > threshold) {
+                if (!isPlaying) {
+                    isPlaying = true;
+                    playStart = Date.now();
+                }
+                if ((Date.now() - playStart) / 1000 >= minDuration) {
+                    document.getElementById('status').innerText = "Playing";
+                    playTime++;
+                }
+            } else {
+                if (isPlaying) {
+                    isPlaying = false;
+                }
+                document.getElementById('status').innerText = "Studying";
+                studyTime++;
             }
-            return nextFullMoon;
+            
+            document.getElementById('playTime').innerText = playTime;
+            document.getElementById('studyTime').innerText = studyTime;
         }
-
-        function getNextEUVote() {
-            return new Date(2029, 5, 1, 8, 0, 0); 
-        }
-
-        function updateCountdown() {
-            const now = new Date();
-            const unit = document.getElementById("unit-selector").value;
-            let divider = 1000 * 60 * 60; 
-            let unitLabel = "hours";
-
-            if (unit === "days") {
-                divider = 1000 * 60 * 60 * 24;
-                unitLabel = "days";
-            } else if (unit === "seconds") {
-                divider = 1000;
-                unitLabel = "seconds";
-            }
-
-            function formatTimeLeft(targetDate) {
-                return Math.floor((targetDate - now) / divider);
-            }
-
-            const fullMoonDate = getNextFullMoon();
-            const euVoteDate = getNextEUVote();
-
-            document.getElementById('full-moon').innerHTML = `Next Full Moon: <span>${formatTimeLeft(fullMoonDate)} ${unitLabel}</span>`;
-            document.getElementById('eu-vote').innerHTML = `Next EU Vote: <span>${formatTimeLeft(euVoteDate)} ${unitLabel}</span>`;
-
-            function getSunTimes(lat, lon) {
-                const times = new Date();
-                const sunrise = new Date(times.setHours(6, 30, 0, 0)); 
-                const sunset = new Date(times.setHours(18, 30, 0, 0)); 
-                document.getElementById('sunrise').innerHTML = `Next Sunrise: <span>${formatTimeLeft(sunrise)} ${unitLabel}</span>`;
-                document.getElementById('sunset').innerHTML = `Next Sunset: <span>${formatTimeLeft(sunset)} ${unitLabel}</span>`;
-            }
-
-            navigator.geolocation.getCurrentPosition((position) => {
-                getSunTimes(position.coords.latitude, position.coords.longitude);
-            });
-        }
-
-        document.getElementById("unit-selector").addEventListener("change", updateCountdown);
-        setInterval(updateCountdown, 1000);
-        updateCountdown();
     </script>
 </body>
 </html>
