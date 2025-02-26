@@ -25,13 +25,26 @@
             margin-bottom: 20px;
         }
         .countdown div {
-            font-size: 24px;
+            font-size: 20px;
             margin: 10px 0;
         }
         .countdown span {
             font-weight: bold;
-            font-size: 32px;
+            font-size: 28px;
             color: #333;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress {
+            height: 10px;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 10px;
         }
     </style>
 </head>
@@ -39,31 +52,53 @@
     <div class="countdown">
         <h1>Real-Time Countdown</h1>
         <div id="year"></div>
+        <div class="progress-bar"><div id="year-progress" class="progress"></div></div>
         <div id="month"></div>
+        <div class="progress-bar"><div id="month-progress" class="progress"></div></div>
         <div id="week"></div>
+        <div class="progress-bar"><div id="week-progress" class="progress"></div></div>
     </div>
 
     <script>
         function updateCountdown() {
             const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1; // Months are 0-indexed
-            const currentWeek = Math.ceil((now.getDate() + 6 - now.getDay()) / 7); // Calculate the current week
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay()); // Set to the start of the week (Sunday)
 
-            const yearEnd = new Date(currentYear, 11, 31); // December 31 of the current year
-            const monthsInYear = 12;
+            const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); // Set to the end of the week (Saturday)
 
-            const remainingDaysInYear = Math.ceil((yearEnd - now) / (1000 * 60 * 60 * 24));
+            const totalHoursInYear = (endOfYear - startOfYear) / (1000 * 60 * 60);
+            const totalHoursInMonth = (endOfMonth - startOfMonth) / (1000 * 60 * 60);
+            const totalHoursInWeek = (endOfWeek - startOfWeek) / (1000 * 60 * 60);
 
-            // Update the countdown
-            document.getElementById('year').innerHTML = `Time left this year: <span>${remainingDaysInYear} days</span>`;
-            document.getElementById('month').innerHTML = `Month: <span>${currentMonth}</span>`;
-            document.getElementById('week').innerHTML = `Week of the year: <span>${currentWeek}</span>`;
+            const elapsedHoursInYear = (now - startOfYear) / (1000 * 60 * 60);
+            const elapsedHoursInMonth = (now - startOfMonth) / (1000 * 60 * 60);
+            const elapsedHoursInWeek = (now - startOfWeek) / (1000 * 60 * 60);
+
+            const remainingHoursInYear = totalHoursInYear - elapsedHoursInYear;
+            const remainingHoursInMonth = totalHoursInMonth - elapsedHoursInMonth;
+            const remainingHoursInWeek = totalHoursInWeek - elapsedHoursInWeek;
+
+            const yearPercentage = (elapsedHoursInYear / totalHoursInYear) * 100;
+            const monthPercentage = (elapsedHoursInMonth / totalHoursInMonth) * 100;
+            const weekPercentage = (elapsedHoursInWeek / totalHoursInWeek) * 100;
+
+            document.getElementById('year').innerHTML = `Time left this year: <span>${Math.floor(remainingHoursInYear)} hours</span> (${(100 - yearPercentage).toFixed(2)}%)`;
+            document.getElementById('month').innerHTML = `Time left this month: <span>${Math.floor(remainingHoursInMonth)} hours</span> (${(100 - monthPercentage).toFixed(2)}%)`;
+            document.getElementById('week').innerHTML = `Time left this week: <span>${Math.floor(remainingHoursInWeek)} hours</span> (${(100 - weekPercentage).toFixed(2)}%)`;
+
+            document.getElementById('year-progress').style.width = `${yearPercentage}%`;
+            document.getElementById('month-progress').style.width = `${monthPercentage}%`;
+            document.getElementById('week-progress').style.width = `${weekPercentage}%`;
         }
 
-        // Update the countdown every second
         setInterval(updateCountdown, 1000);
-        updateCountdown(); // Initial call to display countdown immediately
+        updateCountdown();
     </script>
 </body>
 </html>
