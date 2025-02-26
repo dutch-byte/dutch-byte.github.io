@@ -7,6 +7,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
         #status { font-size: 24px; margin: 20px; }
+        canvas { border: 1px solid black; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -17,13 +18,34 @@
     <p>Play Time: <span id="playTime">0</span> sec</p>
     <p>Study Time: <span id="studyTime">0</span> sec</p>
     
+    <label>Threshold: <input type="range" id="thresholdSlider" min="0.01" max="0.2" step="0.01" value="0.05"></label>
+    <span id="thresholdValue">0.05</span>
+    <br>
+    <label>Min Duration: <input type="range" id="durationSlider" min="1" max="5" step="1" value="2"></label>
+    <span id="durationValue">2</span>
+    
+    <canvas id="historyCanvas" width="400" height="200"></canvas>
+    
     <script>
         let audioContext, analyser, microphone;
         let playTime = 0, studyTime = 0;
-        let threshold = 0.05, minDuration = 2; // Adjust as needed
+        let threshold = 0.05, minDuration = 2;
         let isPlaying = false;
         let playStart = 0;
         let interval;
+        let history = [];
+        let canvas = document.getElementById('historyCanvas');
+        let ctx = canvas.getContext('2d');
+
+        document.getElementById('thresholdSlider').addEventListener('input', (e) => {
+            threshold = parseFloat(e.target.value);
+            document.getElementById('thresholdValue').innerText = threshold;
+        });
+
+        document.getElementById('durationSlider').addEventListener('input', (e) => {
+            minDuration = parseInt(e.target.value);
+            document.getElementById('durationValue').innerText = minDuration;
+        });
 
         document.getElementById('start').addEventListener('click', async () => {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -70,6 +92,21 @@
             
             document.getElementById('playTime').innerText = playTime;
             document.getElementById('studyTime').innerText = studyTime;
+            history.push({ playTime, studyTime });
+            drawHistory();
+        }
+
+        function drawHistory() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            history.forEach((point, index) => {
+                let x = (index / history.length) * canvas.width;
+                let y = canvas.height - (point.playTime / (point.playTime + point.studyTime) * canvas.height);
+                ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = "blue";
+            ctx.stroke();
         }
     </script>
 </body>
