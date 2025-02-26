@@ -14,6 +14,7 @@
             height: 100vh;
             margin: 0;
             flex-direction: column;
+            overflow-y: auto;
         }
         .countdown {
             text-align: center;
@@ -21,6 +22,7 @@
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
         }
         .countdown h1 {
             margin-bottom: 20px;
@@ -71,58 +73,64 @@
         <div class="progress-bar"><div id="week-progress" class="progress"></div></div>
     </div>
 
+    <div class="countdown">
+        <h1>Upcoming Events</h1>
+        <div id="full-moon"></div>
+        <div id="sunset"></div>
+        <div id="sunrise"></div>
+        <div id="eu-vote"></div>
+    </div>
+
     <script>
+        function getNextFullMoon() {
+            const lunarCycle = 29.53 * 24 * 60 * 60 * 1000; 
+            const knownFullMoon = new Date(2024, 0, 25); 
+            let nextFullMoon = new Date(knownFullMoon);
+            while (nextFullMoon < new Date()) {
+                nextFullMoon = new Date(nextFullMoon.getTime() + lunarCycle);
+            }
+            return nextFullMoon;
+        }
+
+        function getNextEUVote() {
+            return new Date(2029, 5, 1, 8, 0, 0); 
+        }
+
         function updateCountdown() {
             const now = new Date();
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay()); 
-
-            const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6); 
-
-            const totalMillisecondsInYear = endOfYear - startOfYear;
-            const totalMillisecondsInMonth = endOfMonth - startOfMonth;
-            const totalMillisecondsInWeek = endOfWeek - startOfWeek;
-
-            const elapsedMillisecondsInYear = now - startOfYear;
-            const elapsedMillisecondsInMonth = now - startOfMonth;
-            const elapsedMillisecondsInWeek = now - startOfWeek;
-
-            const remainingMillisecondsInYear = totalMillisecondsInYear - elapsedMillisecondsInYear;
-            const remainingMillisecondsInMonth = totalMillisecondsInMonth - elapsedMillisecondsInMonth;
-            const remainingMillisecondsInWeek = totalMillisecondsInWeek - elapsedMillisecondsInWeek;
-
             const unit = document.getElementById("unit-selector").value;
-            let timeUnit = "hours";
             let divider = 1000 * 60 * 60; 
+            let unitLabel = "hours";
 
             if (unit === "days") {
                 divider = 1000 * 60 * 60 * 24;
-                timeUnit = "days";
+                unitLabel = "days";
             } else if (unit === "seconds") {
                 divider = 1000;
-                timeUnit = "seconds";
+                unitLabel = "seconds";
             }
 
-            const remainingTimeInYear = Math.floor(remainingMillisecondsInYear / divider);
-            const remainingTimeInMonth = Math.floor(remainingMillisecondsInMonth / divider);
-            const remainingTimeInWeek = Math.floor(remainingMillisecondsInWeek / divider);
+            function formatTimeLeft(targetDate) {
+                return Math.floor((targetDate - now) / divider);
+            }
 
-            const yearPercentage = (elapsedMillisecondsInYear / totalMillisecondsInYear) * 100;
-            const monthPercentage = (elapsedMillisecondsInMonth / totalMillisecondsInMonth) * 100;
-            const weekPercentage = (elapsedMillisecondsInWeek / totalMillisecondsInWeek) * 100;
+            const fullMoonDate = getNextFullMoon();
+            const euVoteDate = getNextEUVote();
 
-            document.getElementById('year').innerHTML = `Time left this year: <span>${remainingTimeInYear} ${timeUnit}</span> (${(100 - yearPercentage).toFixed(2)}%)`;
-            document.getElementById('month').innerHTML = `Time left this month: <span>${remainingTimeInMonth} ${timeUnit}</span> (${(100 - monthPercentage).toFixed(2)}%)`;
-            document.getElementById('week').innerHTML = `Time left this week: <span>${remainingTimeInWeek} ${timeUnit}</span> (${(100 - weekPercentage).toFixed(2)}%)`;
+            document.getElementById('full-moon').innerHTML = `Next Full Moon: <span>${formatTimeLeft(fullMoonDate)} ${unitLabel}</span>`;
+            document.getElementById('eu-vote').innerHTML = `Next EU Vote: <span>${formatTimeLeft(euVoteDate)} ${unitLabel}</span>`;
 
-            document.getElementById('year-progress').style.width = `${yearPercentage}%`;
-            document.getElementById('month-progress').style.width = `${monthPercentage}%`;
-            document.getElementById('week-progress').style.width = `${weekPercentage}%`;
+            function getSunTimes(lat, lon) {
+                const times = new Date();
+                const sunrise = new Date(times.setHours(6, 30, 0, 0)); 
+                const sunset = new Date(times.setHours(18, 30, 0, 0)); 
+                document.getElementById('sunrise').innerHTML = `Next Sunrise: <span>${formatTimeLeft(sunrise)} ${unitLabel}</span>`;
+                document.getElementById('sunset').innerHTML = `Next Sunset: <span>${formatTimeLeft(sunset)} ${unitLabel}</span>`;
+            }
+
+            navigator.geolocation.getCurrentPosition((position) => {
+                getSunTimes(position.coords.latitude, position.coords.longitude);
+            });
         }
 
         document.getElementById("unit-selector").addEventListener("change", updateCountdown);
