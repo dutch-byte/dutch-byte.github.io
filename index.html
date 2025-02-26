@@ -1,102 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Countdown</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-gap: 15px;
-            width: 80%;
-            max-width: 600px;
-        }
-        .countdown-box {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        .countdown-box h2 {
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-        .countdown-box span {
-            font-weight: bold;
-            font-size: 30px;
-            color: #333;
-        }
-        .progress-bar {
-            width: 100%;
-            background-color: #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-        .progress {
-            height: 10px;
-            background-color: #4CAF50;
-            transition: width 0.5s ease-in-out;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Countdown Grid</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 90%;
+      max-width: 800px;
+    }
+    .block {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .block h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+    .block p {
+      font-size: 2rem;
+      margin: 10px 0;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-    <div class="grid-container">
-        <div class="countdown-box">
-            <h2>Year Progress</h2>
-            <span id="year-days"></span> days passed
-            <div class="progress-bar"><div id="year-progress" class="progress"></div></div>
-        </div>
-        <div class="countdown-box">
-            <h2>Days Left</h2>
-            <span id="days-left"></span> days
-        </div>
-        <div class="countdown-box">
-            <h2>Hours Left</h2>
-            <span id="hours-left"></span> hours
-        </div>
-        <div class="countdown-box">
-            <h2>Minutes Left</h2>
-            <span id="minutes-left"></span> minutes
-        </div>
+  <div class="grid-container">
+    <!-- Year Countdown Block (Days) -->
+    <div class="block" id="year-block">
+      <h2>Year Countdown (Days)</h2>
+      <p id="year-countdown">--</p>
     </div>
+    <!-- Month Countdown Block (Days) -->
+    <div class="block" id="month-block">
+      <h2>Month Countdown (Days)</h2>
+      <p id="month-countdown">--</p>
+    </div>
+    <!-- Week Countdown Block (Hours) -->
+    <div class="block" id="week-block">
+      <h2>Week Countdown (Hours)</h2>
+      <p id="week-countdown">--</p>
+    </div>
+    <!-- Day Countdown Block (Minutes) -->
+    <div class="block" id="day-block">
+      <h2>Day Countdown (Minutes)</h2>
+      <p id="day-countdown">--</p>
+    </div>
+  </div>
 
-    <script>
-        function updateCountdown() {
-            const now = new Date();
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+  <script>
+    function updateCountdowns() {
+      const now = new Date();
 
-            const totalDaysInYear = (endOfYear - startOfYear) / (1000 * 60 * 60 * 24);
-            const elapsedDays = (now - startOfYear) / (1000 * 60 * 60 * 24);
-            const remainingDays = totalDaysInYear - elapsedDays;
+      // --- Year Countdown in Days ---
+      const currentYear = now.getFullYear();
+      // End of the year: December 31st at 23:59:59
+      const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
+      const diffYearMs = endOfYear - now;
+      const diffYearDays = Math.floor(diffYearMs / (1000 * 60 * 60 * 24));
+      document.getElementById("year-countdown").textContent = diffYearDays;
 
-            const remainingHours = remainingDays * 24;
-            const remainingMinutes = remainingHours * 60;
+      // --- Month Countdown in Days ---
+      // End of month: last day of current month at 23:59:59.
+      // When day is 0, it returns the last day of the previous month,
+      // so month+1, 0 gives the last day of the current month.
+      const endOfMonth = new Date(currentYear, now.getMonth() + 1, 0, 23, 59, 59);
+      const diffMonthMs = endOfMonth - now;
+      const diffMonthDays = Math.floor(diffMonthMs / (1000 * 60 * 60 * 24));
+      document.getElementById("month-countdown").textContent = diffMonthDays;
 
-            const yearPercentage = (elapsedDays / totalDaysInYear) * 100;
+      // --- Week Countdown in Hours ---
+      // Assume week ends on Saturday at 23:59:59.
+      // getDay() returns 0 (Sunday) to 6 (Saturday)
+      const currentDay = now.getDay(); // e.g. Sunday = 0, Monday = 1, ..., Saturday = 6
+      // Calculate how many days remain until Saturday
+      const daysUntilSaturday = 6 - currentDay;
+      const endOfWeek = new Date(now);
+      endOfWeek.setDate(now.getDate() + daysUntilSaturday);
+      endOfWeek.setHours(23, 59, 59, 999);
+      const diffWeekMs = endOfWeek - now;
+      const diffWeekHours = Math.floor(diffWeekMs / (1000 * 60 * 60));
+      document.getElementById("week-countdown").textContent = diffWeekHours;
 
-            document.getElementById('year-days').innerText = Math.floor(elapsedDays);
-            document.getElementById('days-left').innerText = Math.floor(remainingDays);
-            document.getElementById('hours-left').innerText = Math.floor(remainingHours);
-            document.getElementById('minutes-left').innerText = Math.floor(remainingMinutes);
+      // --- Day Countdown in Minutes ---
+      // End of day: today at 23:59:59.
+      const endOfDay = new Date(currentYear, now.getMonth(), now.getDate(), 23, 59, 59);
+      const diffDayMs = endOfDay - now;
+      const diffDayMinutes = Math.floor(diffDayMs / (1000 * 60));
+      document.getElementById("day-countdown").textContent = diffDayMinutes;
+    }
 
-            document.getElementById('year-progress').style.width = `${yearPercentage}%`;
-        }
-
-        setInterval(updateCountdown, 1000);
-        updateCountdown();
-    </script>
+    // Update every second
+    setInterval(updateCountdowns, 1000);
+    updateCountdowns(); // Initial call
+  </script>
 </body>
 </html>
