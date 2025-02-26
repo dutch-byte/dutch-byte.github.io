@@ -13,6 +13,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            flex-direction: column;
         }
         .countdown {
             text-align: center;
@@ -46,9 +47,20 @@
             text-align: center;
             line-height: 10px;
         }
+        .selector {
+            margin-bottom: 15px;
+            font-size: 16px;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
+    <select id="unit-selector" class="selector">
+        <option value="hours">Hours</option>
+        <option value="days">Days</option>
+        <option value="seconds">Seconds</option>
+    </select>
+
     <div class="countdown">
         <h1>Real-Time Countdown</h1>
         <div id="year"></div>
@@ -65,38 +77,55 @@
             const startOfYear = new Date(now.getFullYear(), 0, 1);
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay()); // Set to the start of the week (Sunday)
+            startOfWeek.setDate(now.getDate() - now.getDay()); 
 
             const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
             const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6); // Set to the end of the week (Saturday)
+            endOfWeek.setDate(startOfWeek.getDate() + 6); 
 
-            const totalHoursInYear = (endOfYear - startOfYear) / (1000 * 60 * 60);
-            const totalHoursInMonth = (endOfMonth - startOfMonth) / (1000 * 60 * 60);
-            const totalHoursInWeek = (endOfWeek - startOfWeek) / (1000 * 60 * 60);
+            const totalMillisecondsInYear = endOfYear - startOfYear;
+            const totalMillisecondsInMonth = endOfMonth - startOfMonth;
+            const totalMillisecondsInWeek = endOfWeek - startOfWeek;
 
-            const elapsedHoursInYear = (now - startOfYear) / (1000 * 60 * 60);
-            const elapsedHoursInMonth = (now - startOfMonth) / (1000 * 60 * 60);
-            const elapsedHoursInWeek = (now - startOfWeek) / (1000 * 60 * 60);
+            const elapsedMillisecondsInYear = now - startOfYear;
+            const elapsedMillisecondsInMonth = now - startOfMonth;
+            const elapsedMillisecondsInWeek = now - startOfWeek;
 
-            const remainingHoursInYear = totalHoursInYear - elapsedHoursInYear;
-            const remainingHoursInMonth = totalHoursInMonth - elapsedHoursInMonth;
-            const remainingHoursInWeek = totalHoursInWeek - elapsedHoursInWeek;
+            const remainingMillisecondsInYear = totalMillisecondsInYear - elapsedMillisecondsInYear;
+            const remainingMillisecondsInMonth = totalMillisecondsInMonth - elapsedMillisecondsInMonth;
+            const remainingMillisecondsInWeek = totalMillisecondsInWeek - elapsedMillisecondsInWeek;
 
-            const yearPercentage = (elapsedHoursInYear / totalHoursInYear) * 100;
-            const monthPercentage = (elapsedHoursInMonth / totalHoursInMonth) * 100;
-            const weekPercentage = (elapsedHoursInWeek / totalHoursInWeek) * 100;
+            const unit = document.getElementById("unit-selector").value;
+            let timeUnit = "hours";
+            let divider = 1000 * 60 * 60; 
 
-            document.getElementById('year').innerHTML = `Time left this year: <span>${Math.floor(remainingHoursInYear)} hours</span> (${(100 - yearPercentage).toFixed(2)}%)`;
-            document.getElementById('month').innerHTML = `Time left this month: <span>${Math.floor(remainingHoursInMonth)} hours</span> (${(100 - monthPercentage).toFixed(2)}%)`;
-            document.getElementById('week').innerHTML = `Time left this week: <span>${Math.floor(remainingHoursInWeek)} hours</span> (${(100 - weekPercentage).toFixed(2)}%)`;
+            if (unit === "days") {
+                divider = 1000 * 60 * 60 * 24;
+                timeUnit = "days";
+            } else if (unit === "seconds") {
+                divider = 1000;
+                timeUnit = "seconds";
+            }
+
+            const remainingTimeInYear = Math.floor(remainingMillisecondsInYear / divider);
+            const remainingTimeInMonth = Math.floor(remainingMillisecondsInMonth / divider);
+            const remainingTimeInWeek = Math.floor(remainingMillisecondsInWeek / divider);
+
+            const yearPercentage = (elapsedMillisecondsInYear / totalMillisecondsInYear) * 100;
+            const monthPercentage = (elapsedMillisecondsInMonth / totalMillisecondsInMonth) * 100;
+            const weekPercentage = (elapsedMillisecondsInWeek / totalMillisecondsInWeek) * 100;
+
+            document.getElementById('year').innerHTML = `Time left this year: <span>${remainingTimeInYear} ${timeUnit}</span> (${(100 - yearPercentage).toFixed(2)}%)`;
+            document.getElementById('month').innerHTML = `Time left this month: <span>${remainingTimeInMonth} ${timeUnit}</span> (${(100 - monthPercentage).toFixed(2)}%)`;
+            document.getElementById('week').innerHTML = `Time left this week: <span>${remainingTimeInWeek} ${timeUnit}</span> (${(100 - weekPercentage).toFixed(2)}%)`;
 
             document.getElementById('year-progress').style.width = `${yearPercentage}%`;
             document.getElementById('month-progress').style.width = `${monthPercentage}%`;
             document.getElementById('week-progress').style.width = `${weekPercentage}%`;
         }
 
+        document.getElementById("unit-selector").addEventListener("change", updateCountdown);
         setInterval(updateCountdown, 1000);
         updateCountdown();
     </script>
