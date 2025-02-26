@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Countdown</title>
+    <title>Time Countdown</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,23 +14,27 @@
             height: 100vh;
             margin: 0;
         }
-        .countdown {
-            text-align: center;
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 15px;
+            width: 80%;
+            max-width: 600px;
+        }
+        .countdown-box {
             background-color: white;
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
-        .countdown h1 {
-            margin-bottom: 20px;
-        }
-        .countdown div {
+        .countdown-box h2 {
+            margin-bottom: 10px;
             font-size: 20px;
-            margin: 10px 0;
         }
-        .countdown span {
+        .countdown-box span {
             font-weight: bold;
-            font-size: 28px;
+            font-size: 30px;
             color: #333;
         }
         .progress-bar {
@@ -38,63 +42,57 @@
             background-color: #ddd;
             border-radius: 5px;
             overflow: hidden;
-            margin-top: 5px;
+            margin-top: 10px;
         }
         .progress {
             height: 10px;
             background-color: #4CAF50;
-            text-align: center;
-            line-height: 10px;
+            transition: width 0.5s ease-in-out;
         }
     </style>
 </head>
 <body>
-    <div class="countdown">
-        <h1>Real-Time Countdown</h1>
-        <div id="year"></div>
-        <div class="progress-bar"><div id="year-progress" class="progress"></div></div>
-        <div id="month"></div>
-        <div class="progress-bar"><div id="month-progress" class="progress"></div></div>
-        <div id="week"></div>
-        <div class="progress-bar"><div id="week-progress" class="progress"></div></div>
+    <div class="grid-container">
+        <div class="countdown-box">
+            <h2>Year Progress</h2>
+            <span id="year-days"></span> days passed
+            <div class="progress-bar"><div id="year-progress" class="progress"></div></div>
+        </div>
+        <div class="countdown-box">
+            <h2>Days Left</h2>
+            <span id="days-left"></span> days
+        </div>
+        <div class="countdown-box">
+            <h2>Hours Left</h2>
+            <span id="hours-left"></span> hours
+        </div>
+        <div class="countdown-box">
+            <h2>Minutes Left</h2>
+            <span id="minutes-left"></span> minutes
+        </div>
     </div>
 
     <script>
         function updateCountdown() {
             const now = new Date();
             const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay()); // Set to the start of the week (Sunday)
-
             const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6); // Set to the end of the week (Saturday)
 
-            const totalHoursInYear = (endOfYear - startOfYear) / (1000 * 60 * 60);
-            const totalHoursInMonth = (endOfMonth - startOfMonth) / (1000 * 60 * 60);
-            const totalHoursInWeek = (endOfWeek - startOfWeek) / (1000 * 60 * 60);
+            const totalDaysInYear = (endOfYear - startOfYear) / (1000 * 60 * 60 * 24);
+            const elapsedDays = (now - startOfYear) / (1000 * 60 * 60 * 24);
+            const remainingDays = totalDaysInYear - elapsedDays;
 
-            const elapsedHoursInYear = (now - startOfYear) / (1000 * 60 * 60);
-            const elapsedHoursInMonth = (now - startOfMonth) / (1000 * 60 * 60);
-            const elapsedHoursInWeek = (now - startOfWeek) / (1000 * 60 * 60);
+            const remainingHours = remainingDays * 24;
+            const remainingMinutes = remainingHours * 60;
 
-            const remainingHoursInYear = totalHoursInYear - elapsedHoursInYear;
-            const remainingHoursInMonth = totalHoursInMonth - elapsedHoursInMonth;
-            const remainingHoursInWeek = totalHoursInWeek - elapsedHoursInWeek;
+            const yearPercentage = (elapsedDays / totalDaysInYear) * 100;
 
-            const yearPercentage = (elapsedHoursInYear / totalHoursInYear) * 100;
-            const monthPercentage = (elapsedHoursInMonth / totalHoursInMonth) * 100;
-            const weekPercentage = (elapsedHoursInWeek / totalHoursInWeek) * 100;
-
-            document.getElementById('year').innerHTML = `Time left this year: <span>${Math.floor(remainingHoursInYear)} hours</span> (${(100 - yearPercentage).toFixed(2)}%)`;
-            document.getElementById('month').innerHTML = `Time left this month: <span>${Math.floor(remainingHoursInMonth)} hours</span> (${(100 - monthPercentage).toFixed(2)}%)`;
-            document.getElementById('week').innerHTML = `Time left this week: <span>${Math.floor(remainingHoursInWeek)} hours</span> (${(100 - weekPercentage).toFixed(2)}%)`;
+            document.getElementById('year-days').innerText = Math.floor(elapsedDays);
+            document.getElementById('days-left').innerText = Math.floor(remainingDays);
+            document.getElementById('hours-left').innerText = Math.floor(remainingHours);
+            document.getElementById('minutes-left').innerText = Math.floor(remainingMinutes);
 
             document.getElementById('year-progress').style.width = `${yearPercentage}%`;
-            document.getElementById('month-progress').style.width = `${monthPercentage}%`;
-            document.getElementById('week-progress').style.width = `${weekPercentage}%`;
         }
 
         setInterval(updateCountdown, 1000);
